@@ -1,0 +1,49 @@
+name: Build NMB RaceBox APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'NMB_RaceBox_Ultimate_Pro_v2.zip'
+      - '.github/workflows/build.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        run: sdkmanager 'platform-tools' 'platforms;android-35' 'build-tools;35.0.0'
+
+      - name: Extract project source
+        run: |
+          test -f NMB_RaceBox_Ultimate_Pro_v2.zip
+          mkdir source
+          unzip -q NMB_RaceBox_Ultimate_Pro_v2.zip -d source
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Build debug APK
+        run: gradle -p source assembleDebug --no-daemon
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NMB-RaceBox-Ultimate-Pro-APK
+          path: source/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
